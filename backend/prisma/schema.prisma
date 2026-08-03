@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum DocumentStatus {
+  uploaded
+  queued
+  uploading
+  analyzing
+  extracting
+  embedding
+  querying
+  ready
+  failed
+}
+
+enum QueryStatus {
+  queued
+  querying
+  completed
+  failed
+}
+
+model Document {
+  id                   String         @id @default(uuid()) @db.Uuid
+  originalFilename     String         @map("original_filename")
+  mimeType             String         @map("mime_type") // "image/png" | "image/jpeg", validated in app layer
+  sizeBytes            BigInt         @map("size_bytes")
+  storageKey           String         @map("storage_key")
+  status               DocumentStatus @default(uploaded)
+  inferenceRefId       String?        @map("inference_ref_id")
+  inferenceAnalysisId  String?        @map("inference_analysis_id")
+  errorMessage         String?        @map("error_message")
+  createdAt            DateTime       @default(now()) @map("created_at")
+  updatedAt            DateTime       @updatedAt @map("updated_at")
+
+  analysis  DocumentAnalysis?
+  queryJobs RagQueryJob[]
+
+  @@map("documents")
+}
+
+model DocumentAnalysis {
+  documentId String   @id @map("document_id") @db.Uuid
+  summary    String
+  entities   Json     @default("[]")
+  raw        Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@map("document_analysis")
+}
+
+model RagQueryJob {
+  id           String      @id @default(uuid()) @db.Uuid
+  documentId   String      @map("document_id") @db.Uuid
+  prompt       String
+  hasImage     Boolean     @default(false) @map("has_image")
+  status       QueryStatus @default(queued)
+  answer       String?
+  errorMessage String?     @map("error_message")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId])
+  @@map("rag_query_jobs")
+}
