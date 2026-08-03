@@ -1,0 +1,76 @@
+@import "tailwindcss";
+
+/*
+  Design plan — "pipeline console"
+  Subject: an internal tool for tracking documents through a fixed-stage
+  processing pipeline (upload -> submit -> analyze -> extract -> embed ->
+  ready -> query). The signature element is the pipeline stepper itself:
+  the UI's job is to make that state machine legible at a glance, so the
+  whole palette is built around distinguishing pipeline states, not around
+  decoration.
+
+  Color (named, not generic gray-500 etc.):
+    --ink        #12161C   base background, deep blue-slate, not pure black
+    --panel      #1A2029   card/panel surface
+    --panel-2    #212934   raised surface (hover, active row)
+    --hairline   #2A323D   borders/dividers
+    --text       #E7EBEF   primary text
+    --text-dim   #8B96A3   secondary/meta text
+    --amber      #E8A33D   in-progress / active stage
+    --teal       #4FB286   ready / success
+    --rose       #D9636B   failed / error
+    --slate-blue #6E8FB8   queued / idle-but-pending
+
+  Type:
+    display -> Space Grotesk (headers, the stepper labels) — technical,
+               slightly angular, reads as instrumentation rather than editorial
+    body    -> Inter (prose: summaries, descriptions)
+    mono    -> JetBrains Mono (ids, timestamps, statuses, entity data) —
+               the "readout" face, used specifically to mark machine-generated
+               / structured data as distinct from human prose
+*/
+
+@theme {
+  --color-ink: #12161c;
+  --color-panel: #1a2029;
+  --color-panel-2: #212934;
+  --color-hairline: #2a323d;
+  --color-text: #e7ebef;
+  --color-text-dim: #8b96a3;
+
+  --color-amber: #e8a33d;
+  --color-amber-dim: #4a3a20;
+  --color-teal: #4fb286;
+  --color-teal-dim: #1f3a30;
+  --color-rose: #d9636b;
+  --color-rose-dim: #3a2226;
+  --color-slate-blue: #6e8fb8;
+  --color-slate-blue-dim: #232f3d;
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", monospace;
+}
+
+html,
+body {
+  background: var(--color-ink);
+  color: var(--color-text);
+}
+
+body {
+  font-family: var(--font-body);
+}
+
+::selection {
+  background: var(--color-amber-dim);
+  color: var(--color-amber);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
