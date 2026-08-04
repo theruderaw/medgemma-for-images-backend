@@ -1,11 +1,23 @@
 import { NextFunction, Request, Response } from 'express';
 import { ragService } from '../services/rag.service';
 
+import { ApiError } from '../types'
+
 export const ragController = {
+
   async query(req: Request, res: Response, next: NextFunction) {
     try {
-      const { query_job_id } = await ragService.submitQuery(req.body);
-      res.status(202).json({ query_job_id, status: 'queued' });
+      const prompt = typeof req.body?.prompt === 'string' ? req.body.prompt.trim() : '';
+      if (!prompt) throw new ApiError(400, '"prompt" is required');
+
+      const response = await ragService.query(req.params.document_id, {
+        prompt,
+        image: req.file
+          ? { buffer: req.file.buffer, mimeType: req.file.mimetype, originalName: req.file.originalname }
+          : undefined,
+      });
+
+      res.status(200).json(response);
     } catch (err) {
       next(err);
     }
@@ -20,3 +32,5 @@ export const ragController = {
     }
   },
 };
+
+

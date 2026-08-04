@@ -1,4 +1,4 @@
-import { RagQueryJo as PrismaRagQueryJob } from '@prisma/client';
+import { RagQueryJob as PrismaRagQueryJob } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { QueryJobRecord, QueryStatus } from '../types';
 

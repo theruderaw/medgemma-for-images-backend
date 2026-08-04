@@ -15,6 +15,5 @@ export function validateBody(schema: ZodSchema) {
 
 export const ragQuerySchema = z.object({
   prompt: z.string().min(1, 'prompt is required'),
-  document_id: z.string().uuid('document_id must be a valid UUID'),
   image_base64: z.string().optional(),
 });

@@ -5,8 +5,8 @@ import { analyzeQueue } from '../queue/analyzeQueue';
 import { ApiError, DocumentAnalysis, DocumentRecord } from '../types';
 
 const EXT_BY_MIME: Record<string, 'png' | 'jpg'> = {
-    'image/png': 'png',
-    'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/jpeg': 'jpg',
 };
 
 export const documentsService = {
@@ -36,6 +36,7 @@ export const documentsService = {
     if (doc.inference_ref_id) return doc;
 
     const fileBuffer = await storageService.read(doc.storage_key);
+    // NOTE: the inference server's DocumentResponse uses `document_id`, not `id`.
     const { document_id: inferenceDocumentId } = await inferenceClient.ingestDocument({
       fileBuffer,
       filename: doc.original_filename,
@@ -48,19 +49,35 @@ export const documentsService = {
     return updated;
   },
 
-  async triggerAnalysis(documentId: string): Promise<{ task_id: string }> {
+  async analyze(documentId: string): Promise<any> {
     const doc = await documentsRepo.findById(documentId);
     if (!doc) throw new ApiError(404, 'Document not found');
     if (!doc.inference_ref_id) {
       throw new ApiError(409, 'Document must be submitted via POST /documents/submit before analysis');
     }
-    if (doc.status === 'analyzing' || doc.status === 'extracting' || doc.status === 'embedding' || doc.status === 'queued') {
+    if (doc.status === 'analyzing' || doc.status === 'queued') {
       throw new ApiError(409, `Document is already being processed (status: ${doc.status})`);
     }
 
-    await documentsRepo.setStatus(documentId, 'queued');
-    const job = await analyzeQueue.add('analyze', { document_id: documentId });
-    return { task_id: job.id as string };
+    await documentsRepo.setStatus(documentId, 'analyzing');
+
+    try {
+      const analysisResponse = await inferenceClient.analyzeDocument(doc.inference_ref_id);
+
+      await documentsRepo.setInferenceAnalysisId(documentId, analysisResponse.analysis_id);
+      await documentsRepo.saveAnalysis({
+        document_id: documentId,
+        summary: analysisResponse.summary,
+        entities: analysisResponse.structured_data?.entities || [],
+        raw: analysisResponse.raw_output,
+      });
+
+      await documentsRepo.setStatus(documentId, 'ready');
+      return analysisResponse;
+    } catch (err: any) {
+      await documentsRepo.setStatus(documentId, 'failed', err.message || 'Analysis failed');
+      throw err;
+    }
   },
 
   async getStatus(documentId: string): Promise<{ document_id: string; status: string; error_message: string | null }> {
@@ -82,6 +99,9 @@ export const documentsService = {
     const doc = await documentsRepo.findById(documentId);
     if (!doc) throw new ApiError(404, 'Document not found');
 
+    if (doc.inference_ref_id) {
+      await inferenceClient.deleteDocument(doc.inference_ref_id);
+    }
     await storageService.delete(doc.storage_key);
     await documentsRepo.delete(documentId);
   },

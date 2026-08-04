@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import { ragController } from '../controllers/rag.controller';
-import { ragQuerySchema, validateBody } from '../middleware/validate';
+import { upload } from '../middleware/upload';
+
 
 export const ragRouter = Router();
 
 /**
  * @openapi
- * /rag/query:
+ * /documents/{document_id}/query:
  *   post:
  *     tags:
  *       - RAG
@@ -16,6 +17,13 @@ export const ragRouter = Router();
  *       (RAG) pipeline. The system retrieves the most relevant analyzed documents
  *       using vector similarity search and generates an AI response from the
  *       retrieved context.
+ *     parameters:
+ *       - in: path
+ *         name: document_id
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
  *     requestBody:
  *       required: true
  *       content:
@@ -23,18 +31,16 @@ export const ragRouter = Router();
  *           schema:
  *             type: object
  *             required:
- *               - question
+ *               - prompt
  *             properties:
- *               question:
+ *               prompt:
  *                 type: string
  *                 description: User's natural language question.
  *                 example: Does this chest X-ray show pneumonia?
- *               top_k:
- *                 type: integer
- *                 description: Number of relevant documents to retrieve.
- *                 default: 5
- *                 minimum: 1
- *                 example: 5
+ *               image_base64:
+ *                 type: string
+ *                 format: byte
+ *                 description: Optional base64-encoded image to include with the question.
  *     responses:
  *       202:
  *         description: Query accepted for processing.
@@ -54,9 +60,10 @@ export const ragRouter = Router();
  *       500:
  *         description: Internal server error.
  */
+
 ragRouter.post(
-  '/rag/query',
-  validateBody(ragQuerySchema),
+  '/documents/:document_id/query',
+  upload.single('image'),   // field name the frontend must use: "image"
   ragController.query
 );
 

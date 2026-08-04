@@ -15,22 +15,24 @@ async function processAnalyzeJob(job: Job<AnalyzeTaskPayload>): Promise<void> {
   }
 
   await documentsRepo.setStatus(document_id, 'analyzing');
-  const { analysis_id } = await inferenceClient.analyzeDocument({
+
+  // POST /documents/{id}/analyze on the inference server runs vision ->
+  // structured extraction -> chunking -> embedding in ONE synchronous call.
+  // There's no separate extract/embed step to call afterward anymore —
+  // the AnalysisResponse that comes back already reflects the finished
+  // pipeline (analysis + chunks persisted server-side).
+  const analysis = await inferenceClient.analyzeDocument({
     inference_document_id: doc.inference_ref_id,
   });
-  await documentsRepo.setInferenceAnalysisId(document_id, analysis_id);
 
-  await documentsRepo.setStatus(document_id, 'extracting');
-  const extracted = await inferenceClient.extractStructured({ analysis_id });
+  await documentsRepo.setInferenceAnalysisId(document_id, analysis.analysis_id);
+
   await documentsRepo.saveAnalysis({
     document_id,
-    summary: extracted.summary,
-    entities: extracted.entities,
-    raw: extracted.raw,
+    summary: analysis.summary,
+    entities: analysis.structured_data.entities,
+    raw: analysis.raw_output,
   });
-
-  await documentsRepo.setStatus(document_id, 'embedding');
-  await inferenceClient.createEmbedding({ analysis_id });
 
   await documentsRepo.setStatus(document_id, 'ready');
 }

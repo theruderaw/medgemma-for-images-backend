@@ -1,4 +1,4 @@
-import { Document as PrismaDocument, DocumentAnalysis as PrismaDocumentAnalysis } from '@prisma/client';
+import { Document as PrismaDocument, DocumentAnalysis as PrismaDocumentAnalysis, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { DocumentAnalysis, DocumentRecord, DocumentStatus } from '../types';
 
@@ -89,16 +89,20 @@ export const documentsRepo = {
     document_id: string;
     summary: string;
     entities: Array<Record<string, unknown>>;
-    raw: Record<string, unknown>;
+    raw: string;
   }): Promise<void> {
     await prisma.documentAnalysis.upsert({
       where: { documentId: analysis.document_id },
-      update: { summary: analysis.summary, entities: analysis.entities, raw: analysis.raw },
+      update: {
+        summary: analysis.summary,
+        entities: analysis.entities as unknown as Prisma.InputJsonValue,
+        raw: analysis.raw,
+      },
       create: {
         documentId: analysis.document_id,
         summary: analysis.summary,
-        entities: analysis.entities,
-        raw: analysis.raw,
+        entities: analysis.entities as unknown as Prisma.InputJsonValue,
+        raw: analysis.raw ?? null,
       },
     });
   },

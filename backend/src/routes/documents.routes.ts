@@ -120,7 +120,7 @@ documentsRouter.post(
 
 /**
  * @openapi
- * /documents/analyze/{document_id}:
+ * /documents/{document_id}/analyze:
  *   post:
  *     tags:
  *       - Analysis
@@ -143,7 +143,7 @@ documentsRouter.post(
  *         description: Analysis failed.
  */
 documentsRouter.post(
-  '/documents/analyze/:document_id',
+  '/documents/:document_id/analyze',
   documentsController.analyze
 );
 

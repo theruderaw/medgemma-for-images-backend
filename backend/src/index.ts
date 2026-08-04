@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './config/swagger';
 
@@ -9,10 +10,17 @@ import { errorHandler, notFoundHandler } from './middleware/errorHandler';
 
 const app = express();
 
+app.use(
+    cors({
+        origin: ['http://localhost:5173'], // Vite dev server
+        credentials: true,
+    })
+);
+
 app.use(express.json({ limit: `${env.jsonBodyLimitMb}mb` }));
 
 app.get('/health', (_req, res) => {
-  res.status(200).json({ status: 'ok' });
+    res.status(200).json({ status: 'ok' });
 });
 
 // API routes
@@ -22,9 +30,9 @@ app.use(ragRouter);
 
 // Swagger UI
 app.use(
-  '/docs',
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerSpec)
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(swaggerSpec)
 );
 
 // Must be last
@@ -32,6 +40,6 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 app.listen(env.port, () => {
-  console.log(`🚀 Server listening on http://localhost:${env.port}`);
-  console.log(`📚 Swagger Docs: http://localhost:${env.port}/docs`);
+    console.log(`🚀 Server listening on http://localhost:${env.port}`);
+    console.log(`📚 Swagger Docs: http://localhost:${env.port}/docs`);
 });

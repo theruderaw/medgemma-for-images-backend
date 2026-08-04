@@ -21,8 +21,8 @@ export interface DocumentRecord {
   inference_ref_id: string | null;
   inference_analysis_id: string | null;
   error_message: string | null;
-  created_at: Date;
-  updated_at: Date;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DocumentAnalysis {
@@ -30,45 +30,13 @@ export interface DocumentAnalysis {
   summary: string;
   entities: Array<Record<string, unknown>>;
   raw: Record<string, unknown>;
-  created_at: Date;
-}
-
-export interface AnalyzeTaskPayload {
-  document_id: string;
+  created_at: string;
 }
 
 export interface QueryJobRecord {
-  id: string;
-  document_id: string;
-  prompt: string;
-  has_image: boolean;
+  query_job_id: string;
   status: QueryStatus;
   answer: string | null;
-  error_message: string | null;
-  created_at: Date;
-  updated_at: Date;
+  sources?: Array<{ document_id: string; score: number }>;
+  error_message?: string | null;
 }
-
-export interface RagQueryRequestBody {
-  prompt: string;
-  image_base64?: string;
-}
-
-export interface RagQueryTaskPayload {
-  query_job_id: string;
-  document_id: string;
-  prompt: string;
-  image_storage_key?: string;
-  image_mime_type?: string;
-}
-
-export class ApiError extends Error {
-  status: number;
-  constructor(status: number, message: string) {
-    super(message);
-    this.status = status;
-  }
-}
-
-export type Extensions =
-    'jpg' | 'jpeg' | 'png'

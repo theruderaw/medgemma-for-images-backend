@@ -1,12 +1,7 @@
-import { startAnalyzeWorker } from './analyzeWorker';
-import { startQueryWorker } from './queryWorker';
-
-const analyzeWorker = startAnalyzeWorker();
-const queryWorker = startQueryWorker();
-
-console.log('Workers started: document-analyze, rag-query');
+// Workers are deprecated in favor of synchronous inference calls.
+// Keeping this file to prevent script breakages.
+console.log('Workers are no longer needed, using sync pipeline.');
 
 process.on('SIGTERM', async () => {
-  await Promise.all([analyzeWorker.close(), queryWorker.close()]);
   process.exit(0);
 });

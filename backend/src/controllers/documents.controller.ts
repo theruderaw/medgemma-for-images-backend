@@ -35,8 +35,8 @@ export const documentsController = {
 
   async analyze(req: Request, res: Response, next: NextFunction) {
     try {
-      const { task_id } = await documentsService.triggerAnalysis(req.params.document_id);
-      res.status(202).json({ task_id, document_id: req.params.document_id, status: 'queued' });
+      const response = await documentsService.analyze(req.params.document_id);
+      res.status(200).json(response);
     } catch (err) {
       next(err);
     }
